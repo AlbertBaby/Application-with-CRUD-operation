@@ -81,7 +81,7 @@ app.post("/login", (req, res) => {
       user.find({ username: req.body.username }, (err, data) => {
         if (data.length > 0) {
 
-          if (bcrypt.compareSync(data[0].password, req.body.password)) {
+          if (bcrypt.compareSync(req.body.password, data[0].password)) {
             checkUserAndGenerateToken(data[0], req, res);
           } else {
 
@@ -124,7 +124,8 @@ app.post("/register", (req, res) => {
 
           let User = new user({
             username: req.body.username,
-            password: req.body.password
+            password: bcrypt.hashSync(req.body.password, 10)
+
           });
           User.save((err, data) => {
             if (err) {
@@ -222,12 +223,26 @@ app.post("/add-product", upload.any(), (req, res) => {
 });
 
 /* Api to update Product */
-app.post("/update-product", upload.any(), (req, res) => {
+app.put("/products/:id", upload.any(), (req, res) => {
   try {
     if (req.files && req.body && req.body.name && req.body.desc && req.body.price &&
-      req.body.id && req.body.discount) {
+      req.body.discount) {
+      const productId = req.params.id;
 
-      product.findById(req.body.id, (err, new_product) => {
+      product.findById(productId, (err, new_product) => {
+        if (err) {
+          return res.status(400).json({
+            errorMessage: err,
+            status: false
+          });
+        }
+        
+        if (!new_product) {
+          return res.status(404).json({
+            errorMessage: 'Product not found',
+            status: false
+          });
+        }
 
         // if file already exist than remove it
         if (req.files && req.files[0] && req.files[0].filename && new_product.image) {
@@ -282,10 +297,11 @@ app.post("/update-product", upload.any(), (req, res) => {
 });
 
 /* Api to delete Product */
-app.post("/delete-product", (req, res) => {
+app.delete("/products/:id", (req, res) => {
   try {
-    if (req.body && req.body.id) {
-      product.findByIdAndUpdate(req.body.id, { is_delete: true }, { new: true }, (err, data) => {
+    const productId = req.params.id;
+    if (productId) {
+      product.findByIdAndUpdate(productId, { is_delete: true }, { new: true }, (err, data) => {
         if (data.is_delete) {
           res.status(200).json({
             status: true,
@@ -331,7 +347,7 @@ app.get("/get-product", (req, res) => {
     product.find(query, { date: 1, name: 1, id: 1, desc: 1, price: 1, discount: 1, image: 1 })
       .skip((perPage * page) - perPage).limit(perPage)
       .then((data) => {
-        product.find(query).count()
+        product.countDocuments(query)
           .then((count) => {
 
             if (data && data.length > 0) {

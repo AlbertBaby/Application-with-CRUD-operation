@@ -3,8 +3,6 @@ import swal from "sweetalert";
 import { Button, TextField, Link } from "@material-ui/core";
 import { withRouter } from "./utils";
 const axios = require("axios");
-const bcrypt = require("bcryptjs");
-var salt = bcrypt.genSaltSync(10);
 
 class Login extends React.Component {
   constructor(props) {
@@ -18,11 +16,9 @@ class Login extends React.Component {
   onChange = (e) => this.setState({ [e.target.name]: e.target.value });
 
   login = () => {
-    const pwd = bcrypt.hashSync(this.state.password, salt);
-
     axios.post('http://localhost:2000/login', {
       username: this.state.username,
-      password: pwd,
+      password: this.state.password,
     }).then((res) => {
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user_id', res.data.id);

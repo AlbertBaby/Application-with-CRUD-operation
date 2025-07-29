@@ -1,0 +1,87 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.env
+.env.local
+.env.*.local
+
+# Backend specific
+backend/node_modules/
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Frontend specific
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.logs
+*.iml
+
+# Maven
+RestAssured/target/
+RestAssured/.mvn/
+RestAssured/mvnw
+RestAssured/mvnw.cmd
+*.classpath
+*.project
+.settings/
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# IDE - IntelliJ IDEA
+.idea/
+*.iws
+*.ipr
+.idea_modules/
+
+# Test reports and results
+RestAssured/test-output/
+RestAssured/reports/
+RestAssured/allure-results/
+RestAssured/allure-report/
+*.allure
+*.html
+playwright/test-results/
+playwright/playwright-report/
+playwright/allure-results/
+playwright/allure-report/
+playwright-report/
+allure-report/
+allure-results/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.swp
+*.swo
+*.tmp
+*.temp

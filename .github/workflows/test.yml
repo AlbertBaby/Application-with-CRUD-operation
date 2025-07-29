@@ -1,0 +1,85 @@
+name: Full Stack Application Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:4.4
+        ports:
+          - 27017:27017
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        java-version: [21]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    # Set up Node.js environment
+    - name: Set up Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: |
+          backend/package-lock.json
+          frontend/package-lock.json
+
+    # Set up Java environment
+    - name: Set up JDK ${{ matrix.java-version }}
+      uses: actions/setup-java@v2
+      with:
+        java-version: ${{ matrix.java-version }}
+        distribution: 'adopt'
+        cache: maven
+
+    # Install backend dependencies and start server
+    - name: Install backend dependencies
+      working-directory: ./backend
+      run: npm install
+
+    - name: Start backend server
+      working-directory: ./backend
+      run: |
+        node server.js &
+        echo $! > /tmp/backend.pid
+        sleep 10 # Wait for server to start
+
+    # Create test image directory and file
+    - name: Set up test resources
+      working-directory: ./RestAssured
+      run: |
+        mkdir -p src/test/resources
+        convert -size 100x100 xc:white src/test/resources/test-image.jpg
+
+    # Run REST Assured tests with Allure results
+    - name: Run REST Assured tests
+      working-directory: ./RestAssured
+      run: mvn clean test allure:report
+
+    # Upload test results and reports
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-results
+        path: |
+          RestAssured/target/surefire-reports/
+          RestAssured/target/allure-results/
+          RestAssured/target/site/allure-maven-plugin/
+        
+    - name: Publish Test Report
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-report
+        path: RestAssured/target/site/allure-maven-plugin/

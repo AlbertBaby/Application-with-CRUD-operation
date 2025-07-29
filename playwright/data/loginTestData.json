@@ -1,0 +1,18 @@
+{
+    "validUser": {
+        "username": "test1",
+        "password": "test1"
+    },
+    "invalidUser": {
+        "username": "problem_user",
+        "password": "test1"
+    },
+    "expectedMessages": {
+        "errorMessage": "Username or password is incorrect!",
+        "pageTitle": "User Login/Register"
+    },
+    "urls": {
+        "baseUrl": "localhost:3000",
+        "registerPath": "/register"
+    }
+}
