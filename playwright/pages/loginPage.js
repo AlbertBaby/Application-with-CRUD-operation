@@ -1,133 +1,93 @@
 import BasePage from './basePage'
-import { baseUrl } from '../config'
 import { loginSelectors } from '../pageobjects/loginPage'
+import { baseUrl } from '../config'
 import { expect } from '@playwright/test'
-import fs from 'fs'
 
-const testData = JSON.parse(fs.readFileSync('./data/loginTestData.json', 'utf-8'))
-
-class LoginPage extends BasePage {
+export default class LoginPage extends BasePage {
     constructor(page) {
         super(page)
     }
 
     async openApp() {
-        await super.open(testData.urls.baseUrl)
-        return await super.waitForPageLoad()
+        await this.page.goto(baseUrl)
+        await this.page.waitForLoadState('networkidle')
+        await expect(this.page).toHaveURL(new RegExp(baseUrl))
     }
 
-    async usernameFieldVisible() {
-        return await this.isElementVisible(loginSelectors.usernameInput)
-    }
-
-    async passwordFieldVisible() {
-        return await this.isElementVisible(loginSelectors.passwordInput)
-    }
-
-    async loginButtonVisible() {
-        return await this.isElementVisible(loginSelectors.loginButton)
-    }
-
-    async loginAsValidUser() {
-        await this.waitAndFill(loginSelectors.usernameInput, testData.validUser.username)
-        await this.waitAndFill(loginSelectors.passwordInput, testData.validUser.password)
-        await this.waitAndClick(loginSelectors.loginButton)
+    async login(username = 'test1', password = 'test1') {
+        await this.page.fill(loginSelectors.usernameInput, username)
+        await this.page.keyboard.press('Tab')
+        await this.page.fill(loginSelectors.passwordInput, password)
+        const loginButton = this.page.locator(loginSelectors.loginButton)
+        await expect(loginButton).toBeEnabled()
+        await loginButton.click()
     }
 
     async loginAsInvalidUser() {
-        await this.waitAndFill(loginSelectors.usernameInput, testData.invalidUser.username)
-        await this.waitAndFill(loginSelectors.passwordInput, testData.invalidUser.password)
-        await this.waitAndClick(loginSelectors.loginButton)
+        await this.login('invalid_user', 'invalid_password')
     }
 
-    async login(username, password) {
-        await this.waitAndFill(loginSelectors.usernameInput, username)
-        await this.waitAndFill(loginSelectors.passwordInput, password)
-        await this.waitAndClick(loginSelectors.loginButton)
+    async verifyLoginError() {
+        const errorMessage = await this.page.locator(loginSelectors.errorMessage)
+        await expect(errorMessage).toBeVisible()
+        await expect(errorMessage).toHaveText('Username or password is incorrect!')
+        await expect(this.page).not.toHaveURL(/.*\/dashboard/)
+        await expect(this.page).toHaveURL(new RegExp(baseUrl))
     }
 
-    async getErrorMessage() {
-        return await this.getTextFromElement(loginSelectors.errorMessage)
+    async verifyLoginPage() {
+        await expect(this.page).toHaveURL(new RegExp(baseUrl))
+        await expect(this.page.locator(loginSelectors.loginButton)).toBeVisible()
     }
 
-    async isLoginButtonDisabled() {
-        const button = await this.page.$(loginSelectors.loginButton)
-        return await button.isDisabled()
+    async verifyLoginButtonDisabled() {
+        await expect(this.page.locator(loginSelectors.loginButton)).toBeDisabled()
     }
 
-    async getLocalStorage(key) {
-        return await this.page.evaluate((k) => localStorage.getItem(k), key)
+    async verifyRegistrationPage() {
+        await expect(this.page).toHaveURL(/.*\/register/)
+        await expect(this.page.locator(loginSelectors.registerButton)).toBeVisible()
     }
 
-    async enterCredentials(username, password) {
-        await this.waitAndFill(loginSelectors.usernameInput, username)
-        await this.waitAndFill(loginSelectors.passwordInput, password)
+    async verifyDashboard() {
+        // Use RegExp for more flexible URL matching
+        await expect(this.page).toHaveURL(/.*\/dashboard/)
+        await expect(this.page.locator(loginSelectors.dashboardHeading)).toBeVisible()
+        await this.page.click(loginSelectors.descriptionHeader)
     }
 
-    async getUsernameValue() {
-        const element = await this.page.$(loginSelectors.usernameInput)
-        return await element.inputValue()
+    async logout() {
+        await this.page.click(loginSelectors.logoutButton)
+        await expect(this.page).toHaveURL(new RegExp(baseUrl))
     }
 
-    async getPasswordValue() {
-        const element = await this.page.$(loginSelectors.passwordInput)
-        return await element.inputValue()
+    generateUniqueUsername() {
+        return `test_${Date.now()}`
+    }
+
+    async register() {
+        const uniqueUsername = this.generateUniqueUsername()
+        await this.clickOnRegisterButton()
+        await this.page.fill(loginSelectors.usernameInput, uniqueUsername)
+        await this.page.fill(loginSelectors.passwordInput, 'test1')
+        await this.page.fill(loginSelectors.confirmPasswordInput, 'test1')
+        await this.page.click(loginSelectors.registerButton)
+        return uniqueUsername
     }
 
     async clickOnRegisterButton() {
-        await this.waitAndClick(loginSelectors.registerLink)
+        await this.page.click(loginSelectors.registerButton)
+        await expect(this.page).toHaveURL(/.*\/register/)
     }
 
-    async getTextFromElement(selector) {
-        return await this.page.textContent(selector)
+    async verifyRegistrationSuccess() {
+        await expect(this.page.locator(loginSelectors.registrationSuccessMessage)).toBeVisible()
+        await this.page.click(loginSelectors.okButton)
+        await expect(this.page).toHaveURL(new RegExp(baseUrl))
     }
 
-    async getUrl() {
-        return super.getUrl()
+    async verifyNoProducts() {
+        await expect(this.page.locator(loginSelectors.noProductMessage)).toBeVisible()
+        await this.page.click(loginSelectors.okButton)
     }
-
-    async getTitle() {
-        return super.getTitle()
-    }
-
-
-	async clickOnRegisterButton() {
-		await this.waitAndClick(loginSelectors.links.register)
-	}
-
-    async verifyUserSuccessfullyLoggedIn() {
-        return await this.isElementVisible(loginSelectors.dashboard)
-    }
-
-	async verifyInvalidUserNotLoggedIn() {
-		 const errorMessage = await loginPage.getTextFromElement(selectors.messages.error);
-        expect(errorMessage).toContain(testData.expectedMessages.errorMessage);
-        expect(await this.page.getUrl()).toContain(testData.urls.baseUrl);
-	}
-
-	async verifyValidLoginPageTitle() {
-		const title = await this.getTitle()
-		expect(title).toBe(testData.expectedMessages.pageTitle)
-	}
-
-	async verifyRegistrationPageUrl() {
-		const url = await this.getUrl()
-		expect(url).toContain(testData.urls.registerPath)
-	}
-
-	async createNewUser() {
-		await this.waitAndFill(loginSelectors.inputs.username, this.createRandomString(8))
-		await this.waitAndFill(loginSelectors.inputs.password, testData.newUser.password)
-		await this.waitAndFill(loginSelectors.inputs.confirmPassword, testData.newUser.password)
-		await this.waitAndClick(loginSelectors.register)
-	}
-
-	async verifySuccessfullRegistration(){
-		const successMessage = await this.getTextFromElement(loginSelectors.messages.success)
-		expect(successMessage).toContain(testData.expectedMessages.registrationSuccess)
-		const url = await this.getUrl()
-		expect(url).toContain(testData.urls.loginPath)
-	}
 }
-
-export default LoginPage

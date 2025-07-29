@@ -1,16 +1,23 @@
-// Login page selectors
 export const loginSelectors = {
-    usernameInput: "[name=\"username\"]",
-    passwordInput: "[name=\"password\"]",
-    loginButton: "button[class*=\"MuiButton-containedPrimary\"]",
-    errorMessage: "[class=\"swal-text\"]",
-    registerLink: '[class="MuiTypography-root MuiLink-root MuiLink-underlineHover MuiLink-button MuiTypography-colorPrimary"]',
-    dashboard: '[data-testid="dashboard"]',
-    register: '[class="MuiTypography-root MuiLink-root MuiLink-underlineHover MuiLink-button MuiTypography-colorPrimary"]',
-    pageTitle: 'User Login/Register'
+    // Login page
+    usernameInput: "[placeholder='User Name']",
+    passwordInput: "[placeholder='Password']",
+    loginButton: "button:has-text('Login')",
+    
+    // Dashboard elements
+    dashboardHeading: "h2:has-text('Dashboard')",
+    descriptionHeader: "th:has-text('Description')",
+    logoutButton: "button:has-text('Log Out')",
+    noProductMessage: "text='There is no product!'",
+    okButton: "button:has-text('OK')",
+    
+    // Registration
+    registerButton: "button:has-text('Register')",
+    confirmPasswordInput: "[placeholder='Confirm Password']",
+    registrationSuccessMessage: "text='Registered Successfully.'"
 };
 
 export const loginData = {
-    validUserName: 'standard_user',
-    invalidUserName: 'problem_user',
+    username: 'test1',
+    password: 'test1',
 }
